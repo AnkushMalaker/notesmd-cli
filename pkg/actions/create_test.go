@@ -271,6 +271,71 @@ func TestCreateNote(t *testing.T) {
 		assert.NoFileExists(t, filepath.Join(tmpDir, "Inbox", "sub", "note.md"))
 	})
 
+	t.Run("Create note from template in configured Templates folder", func(t *testing.T) {
+		// Arrange
+		tmpDir := t.TempDir()
+		obsDir := filepath.Join(tmpDir, ".obsidian")
+		if err := os.MkdirAll(obsDir, 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(obsDir, "templates.json"), []byte(`{"folder":"Templates"}`), 0644); err != nil {
+			t.Fatal(err)
+		}
+		templatesDir := filepath.Join(tmpDir, "Templates")
+		if err := os.MkdirAll(templatesDir, 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(templatesDir, "Person Template.md"), []byte("---\ncategories:\n  - \"[[People]]\"\n---\n# {{title}}\n"), 0644); err != nil {
+			t.Fatal(err)
+		}
+		vault := mocks.MockVaultOperator{Name: "myVault", PathValue: tmpDir}
+		uri := mocks.MockUriManager{}
+		// Act
+		err := actions.CreateNote(&vault, &uri, actions.CreateParams{
+			NoteName: "People/Alice",
+			Template: "Person Template",
+		})
+		// Assert
+		assert.NoError(t, err)
+		content, _ := os.ReadFile(filepath.Join(tmpDir, "People", "Alice.md"))
+		assert.Equal(t, "---\ncategories:\n  - \"[[People]]\"\n---\n# Alice\n", string(content))
+	})
+
+	t.Run("Template content is prepended to provided content", func(t *testing.T) {
+		// Arrange
+		tmpDir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(tmpDir, "Base.md"), []byte("HEADER\n"), 0644); err != nil {
+			t.Fatal(err)
+		}
+		vault := mocks.MockVaultOperator{Name: "myVault", PathValue: tmpDir}
+		uri := mocks.MockUriManager{}
+		// Act — no templates.json, so the template resolves as a vault-relative path
+		err := actions.CreateNote(&vault, &uri, actions.CreateParams{
+			NoteName: "note",
+			Template: "Base",
+			Content:  "body",
+		})
+		// Assert
+		assert.NoError(t, err)
+		content, _ := os.ReadFile(filepath.Join(tmpDir, "note.md"))
+		assert.Equal(t, "HEADER\nbody", string(content))
+	})
+
+	t.Run("Missing template returns an error and writes nothing", func(t *testing.T) {
+		// Arrange
+		tmpDir := t.TempDir()
+		vault := mocks.MockVaultOperator{Name: "myVault", PathValue: tmpDir}
+		uri := mocks.MockUriManager{}
+		// Act
+		err := actions.CreateNote(&vault, &uri, actions.CreateParams{
+			NoteName: "note",
+			Template: "Does Not Exist",
+		})
+		// Assert
+		assert.Error(t, err)
+		assert.NoFileExists(t, filepath.Join(tmpDir, "note.md"))
+	})
+
 	t.Run("UseEditor without open does not use editor", func(t *testing.T) {
 		// Arrange
 		tmpDir := t.TempDir()

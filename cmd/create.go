@@ -11,6 +11,7 @@ import (
 var shouldAppend bool
 var shouldOverwrite bool
 var content string
+var templateName string
 var createNoteCmd = &cobra.Command{
 	Use:     "create",
 	Aliases: []string{"c"},
@@ -24,6 +25,7 @@ var createNoteCmd = &cobra.Command{
 		params := actions.CreateParams{
 			NoteName:        noteName,
 			Content:         content,
+			Template:        templateName,
 			ShouldAppend:    shouldAppend,
 			ShouldOverwrite: shouldOverwrite,
 			ShouldOpen:      shouldOpen,
@@ -40,6 +42,7 @@ func init() {
 	createNoteCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
 	createNoteCmd.Flags().BoolVarP(&shouldOpen, "open", "", false, "open created note")
 	createNoteCmd.Flags().StringVarP(&content, "content", "c", "", "text to add to note")
+	createNoteCmd.Flags().StringVarP(&templateName, "template", "t", "", "template note to base the new note on (resolves {{title}}/{{date}}/{{time}})")
 	createNoteCmd.Flags().BoolVarP(&shouldAppend, "append", "a", false, "append to note")
 	createNoteCmd.Flags().BoolVarP(&shouldOverwrite, "overwrite", "o", false, "overwrite note")
 	createNoteCmd.Flags().BoolP("editor", "e", false, "open in editor instead of Obsidian (requires --open flag)")

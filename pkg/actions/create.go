@@ -14,6 +14,7 @@ type CreateParams struct {
 	ShouldAppend    bool
 	ShouldOverwrite bool
 	Content         string
+	Template        string
 	ShouldOpen      bool
 	UseEditor       bool
 }
@@ -46,6 +47,17 @@ func CreateNote(vault obsidian.VaultManager, uri obsidian.UriManager, params Cre
 
 	// Write the file directly to disk — no Obsidian required.
 	normalizedContent := NormalizeContent(params.Content)
+
+	// Prepend the resolved template body (with {{date}}/{{time}}/{{title}}
+	// substituted) when a template is requested.
+	if params.Template != "" {
+		templateContent, err := ResolveTemplate(vaultPath, params.Template, params.NoteName)
+		if err != nil {
+			return err
+		}
+		normalizedContent = templateContent + normalizedContent
+	}
+
 	if err := WriteNoteFile(notePath, normalizedContent, params.ShouldAppend, params.ShouldOverwrite); err != nil {
 		return err
 	}

@@ -389,9 +389,14 @@ Creates a note (can also be a path with name) directly on disk. **Obsidian does 
 
 When the note name has no explicit path (no `/`), the CLI reads `.obsidian/app.json` from the vault to check for a configured default folder (`newFileLocation: "folder"` and `newFileFolderPath`). If configured, the note is placed in that folder. If the config is missing or unreadable, the note is created at the vault root.
 
+With `--template`, the note is seeded from a template note. The template is looked up in the folder configured in `.obsidian/templates.json` (`folder`), falling back to a vault-relative path. The core variables `{{title}}`, `{{date}}` and `{{time}}` are substituted (with optional inline Moment.js formats, e.g. `{{date:YYYY-MM-DD}}`; defaults `YYYY-MM-DD` / `HH:mm`, overridable via `dateFormat`/`timeFormat` in `templates.json`). Any `--content` is appended after the template body. A missing template is an error and no file is written.
+
 ```bash
 # Creates empty note in default vault
 notesmd-cli create "{note-name}"
+
+# Creates a note from a template (e.g. Templates/Person Template.md)
+notesmd-cli create "People/Alice" --template "Person Template"
 
 # Creates empty note in specified vault
 notesmd-cli create "{note-name}" --vault "{vault-name}"

@@ -22,6 +22,15 @@ type DailyNotesConfig struct {
 	Template string `json:"template"`
 }
 
+// TemplatesConfig represents relevant fields from .obsidian/templates.json
+// (the core Templates plugin). DateFormat/TimeFormat are Moment.js formats used
+// to render the {{date}} / {{time}} template variables; both are optional.
+type TemplatesConfig struct {
+	Folder     string `json:"folder"`
+	DateFormat string `json:"dateFormat"`
+	TimeFormat string `json:"timeFormat"`
+}
+
 // ExcludedPaths reads the userIgnoreFilters from .obsidian/app.json and returns
 // the list of path patterns to exclude. Returns nil if the config is absent or unreadable.
 func ExcludedPaths(vaultPath string) []string {
@@ -70,6 +79,22 @@ func ReadDailyNotesConfig(vaultPath string) DailyNotesConfig {
 	var config DailyNotesConfig
 	if err := json.Unmarshal(data, &config); err != nil {
 		return DailyNotesConfig{}
+	}
+
+	return config
+}
+
+// ReadTemplatesConfig reads the core Templates plugin config from the vault.
+// Returns zero-value config if unreadable.
+func ReadTemplatesConfig(vaultPath string) TemplatesConfig {
+	data, err := os.ReadFile(filepath.Join(vaultPath, ".obsidian", "templates.json"))
+	if err != nil {
+		return TemplatesConfig{}
+	}
+
+	var config TemplatesConfig
+	if err := json.Unmarshal(data, &config); err != nil {
+		return TemplatesConfig{}
 	}
 
 	return config
